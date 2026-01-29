@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>MiNNo - Miss No Notes</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      text-align: center;
+    }
+    h1 { margin-top: 20px; }
+    select {
+      padding: 8px;
+      font-size: 16px;
+    }
+    .keyboard {
+      display: flex;
+      justify-content: center;
+      margin-top: 30px;
+    }
+    .key {
+      width: 60px;
+      height: 200px;
+      margin: 2px;
+      border: 1px solid #333;
+      background: white;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .key:not(.disabled):hover {
+        box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+        transform: translateY(-2px);
+        z-index: 10;
+        transition: all 0.1 ease;
+    }
+    .key:not(.disabled):active {
+        box-shadow: inset 0px 3px 5px rgba(0, 0, 0, 0.2);
+        transform: translateY(1px);
+    }
+    .key[style*="background: rgb(51, 51, 51)"]:not(.disabled):hover {
+        box-shadow: 0px 0px 10px rgba(0, 123, 255, 0.5);
+    }
+    .disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🎵 MiNNo – Miss No Notes</h1>
+<p>Main musik tanpa takut salah nada</p>
+
+<select id="scaleSelect"></select>
+
+<div class="keyboard" id="keyboard"></div>
+
+<script>
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioContext();
+
+// Expanded master list to cover higher octaves for scales like G Major or A Major
+const masterNotes = [
+  {name:'C4', freq:261.63}, {name:'C4#', freq:277.18},
+  {name:'D4', freq:293.66}, {name:'D4#', freq:311.13},
+  {name:'E4', freq:329.63}, {name:'F4', freq:349.23},
+  {name:'F4#', freq:369.99}, {name:'G4', freq:392.00},
+  {name:'G4#', freq:415.30}, {name:'A4', freq:440.00},
+  {name:'A4#', freq:466.16}, {name:'B4', freq:493.88},
+  {name:'C5', freq:523.25}, {name:'C5#', freq:554.37},
+  {name:'D5', freq:587.33}, {name:'D5#', freq:622.25},
+  {name:'E5', freq:659.25}, {name:'F5', freq:698.46},
+  {name:'F5#', freq:739.99}, {name:'G5', freq:783.99},
+  {name:'G5#', freq:830.6}, {name:'A5', freq:880.00},
+];
+
+const scales = {
+  "C Major": ['C4','D4','E4','F4','G4','A4','B4', 'C5'],
+  "G Major": ['G4','A4','B4','C5','D5','E5','F5#', 'G5'],
+  "D Major": ['D4','E4','F4#','G4','A4','B4','C5#', 'D5'],
+  "A Major": ['A4','B4','C5#','D5','E5','F5#','G5#', 'A5'],
+  "F Major": ['F4','G4','A4','A4#','C5','D5','E5', 'F5'],
+};
+
+const scaleSelect = document.getElementById("scaleSelect");
+const keyboard = document.getElementById("keyboard");
+
+// Populate dropdown
+for (let scale in scales) {
+  const option = document.createElement("option");
+  option.value = scale;
+  option.textContent = scale;
+  scaleSelect.appendChild(option);
+}
+
+scaleSelect.onchange = buildKeyboard;
+
+function play(freq) {
+  const osc = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+  
+  osc.type = "sine";
+  osc.frequency.value = freq;
+  
+  gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+  
+  osc.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.3);
+}
+
+function buildKeyboard() {
+  keyboard.innerHTML = "";
+  const activeScale = scales[scaleSelect.value];
+  const rootNoteName = activeScale[0]; // Get the first note of the scale (e.g., 'G4')
+
+  // Find where the root note starts in our master list
+  const startIndex = masterNotes.findIndex(n => n.name === rootNoteName);
+  
+  // Show 13 notes starting from the root (one full octave)
+  const displayNotes = masterNotes.slice(startIndex, startIndex + 13);
+
+  displayNotes.forEach(note => {
+    const key = document.createElement("div");
+    key.className = "key";
+    
+    // Add black key styling if note contains '#'
+    if (note.name.includes('#')) {
+        key.style.background = "#333";
+        key.style.color = "white";
+        key.style.height = "190px"; // Make black keys shorter
+    }
+
+    key.textContent = note.name;
+
+    if (!activeScale.includes(note.name)) {
+      key.classList.add("disabled");
+      if(note.name.includes('#')) {
+        key.style.background = "#bbb"
+        key.style.color = "#ddd"
+      } else {
+      key.style.background = "#ddd"; // Light grey for disabled
+      key.style.color = "#ccc"
+      }
+    } else {
+      key.onclick = () => play(note.freq);
+    }
+    keyboard.appendChild(key);
+  });
+}
+
+scaleSelect.value = "C Major";
+buildKeyboard();
+</script>
+
+</body>
+</html>
