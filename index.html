@@ -70,6 +70,10 @@
 <h1 class="comic-relief-bold">🎵 MiNNo – Miss No Notes</h1>
 <p class="comic-relief-regular">Main musik tanpa takut salah nada</p>
 
+<label class="comic-relief-regular">
+  <input type="checkbox" id="disableToggle" checked> Restrict to Scale
+</label>
+
 <select id="scaleSelect"></select>
 
 <div class="keyboard" id="keyboard"></div>
@@ -77,6 +81,28 @@
 <script>
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioCtx = new AudioContext();
+
+window.addEventListener('keydown', (event) => {
+  const keyMap = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', ']'];
+  const index = keyMap.indexOf(event.key);
+
+  if (index !== -1) {
+    const playableKeys = Array.from(document.querySelectorAll('.key'))
+      .filter(key => key.onclick != null);
+
+    if (playableKeys[index]) {
+      playableKeys[index].click();
+
+      const originalBg = playableKeys[index].style.backgroundColor ||
+        (playableKeys[index].textContent.includes('#') ? "#333" : "white");
+
+      playableKeys[index].style.backgroundColor = "#ffce00";
+      setTimeout(() => {
+        playableKeys[index].style.backgroundColor = originalBg;
+      }, 100);
+    }
+  }
+});
 
 // Expanded master list to cover higher octaves for scales like G Major or A Major
 const masterNotes = [
@@ -132,40 +158,44 @@ function play(freq) {
   osc.stop(audioCtx.currentTime + 0.3);
 }
 
+const disableToggle = document.getElementById("disableToggle");
+
+// Rebuild when toggle changes
+disableToggle.onchange = buildKeyboard;
+
 function buildKeyboard() {
   keyboard.innerHTML = "";
   const activeScale = scales[scaleSelect.value];
-  const rootNoteName = activeScale[0]; // Get the first note of the scale (e.g., 'G4')
+  const rootNoteName = activeScale[0];
+  const isRestrictionOn = disableToggle.checked; // Check the toggle state
 
-  // Find where the root note starts in our master list
   const startIndex = masterNotes.findIndex(n => n.name === rootNoteName);
-  
-  // Show 13 notes starting from the root (one full octave)
   const displayNotes = masterNotes.slice(startIndex, startIndex + 13);
 
   displayNotes.forEach(note => {
     const key = document.createElement("div");
     key.className = "key";
     
-    // Add black key styling if note contains '#'
     if (note.name.includes('#')) {
         key.style.background = "#333";
         key.style.color = "white";
-        key.style.height = "200px"; // Make black keys shorter
+        key.style.height = "200px";
     }
 
     key.textContent = note.name;
 
-    if (!activeScale.includes(note.name)) {
+    // Modified Logic: Only disable if the toggle is ON AND the note isn't in the scale
+    if (isRestrictionOn && !activeScale.includes(note.name)) {
       key.classList.add("disabled");
       if(note.name.includes('#')) {
-        key.style.background = "#bbb"
-        key.style.color = "#ddd"
+        key.style.background = "#bbb";
+        key.style.color = "#ddd";
       } else {
-      key.style.background = "#ddd"; // Light grey for disabled
-      key.style.color = "#ccc"
+        key.style.background = "#ddd";
+        key.style.color = "#ccc";
       }
     } else {
+      // If toggle is OFF or note is in scale, it's playable!
       key.onclick = () => play(note.freq);
     }
     keyboard.appendChild(key);
