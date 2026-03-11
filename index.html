@@ -62,6 +62,10 @@
       font-weight: 700;
       font-style: normal;
     }
+    .active-style {
+      background-color: #ffce00 !important;
+      transform: translateY(2px);
+    }
 
   </style>
 </head>
@@ -82,27 +86,83 @@
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioCtx = new AudioContext();
 
+// Track active sounds and key states
+const activeNodes = {}; 
+const pressedKeys = new Set();
+
+// Handle Keyboard Input
 window.addEventListener('keydown', (event) => {
+  if (pressedKeys.has(event.key)) return; // Prevent auto-repeat stutter
+  
   const keyMap = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', ']'];
   const index = keyMap.indexOf(event.key);
 
   if (index !== -1) {
     const playableKeys = Array.from(document.querySelectorAll('.key'))
-      .filter(key => key.onclick != null);
+      .filter(key => !key.classList.contains('disabled'));
 
     if (playableKeys[index]) {
-      playableKeys[index].click();
-
-      const originalBg = playableKeys[index].style.backgroundColor ||
-        (playableKeys[index].textContent.includes('#') ? "#333" : "white");
-
-      playableKeys[index].style.backgroundColor = "#ffce00";
-      setTimeout(() => {
-        playableKeys[index].style.backgroundColor = originalBg;
-      }, 100);
+      pressedKeys.add(event.key);
+      const noteName = playableKeys[index].getAttribute('data-note');
+      const freq = playableKeys[index].getAttribute('data-freq');
+      
+      startNote(noteName, freq);
+      playableKeys[index].classList.add('active-style');
     }
   }
 });
+
+window.addEventListener('keyup', (event) => {
+  const keyMap = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', ']'];
+  const index = keyMap.indexOf(event.key);
+
+  if (index !== -1) {
+    pressedKeys.delete(event.key);
+    const playableKeys = Array.from(document.querySelectorAll('.key'))
+      .filter(key => !key.classList.contains('disabled'));
+
+    if (playableKeys[index]) {
+      const noteName = playableKeys[index].getAttribute('data-note');
+      stopNote(noteName);
+      playableKeys[index].classList.remove('active-style');
+    }
+  }
+});
+
+function startNote(noteName, freq) {
+  if (activeNodes[noteName]) return; // Already playing
+
+  const osc = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+  
+  osc.type = "sine";
+  osc.frequency.value = freq;
+  
+  // Quick fade in to prevent "clicking"
+  gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+  gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
+  
+  osc.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  
+  osc.start();
+  activeNodes[noteName] = { osc, gainNode };
+}
+
+function stopNote(noteName) {
+  if (activeNodes[noteName]) {
+    const { osc, gainNode } = activeNodes[noteName];
+    const releaseTime = 0.1;
+    
+    // Fade out
+    gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(gainNode.gain.value, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + releaseTime);
+    
+    osc.stop(audioCtx.currentTime + releaseTime);
+    delete activeNodes[noteName];
+  }
+}
 
 // Expanded master list to cover higher octaves for scales like G Major or A Major
 const masterNotes = [
@@ -167,7 +227,7 @@ function buildKeyboard() {
   keyboard.innerHTML = "";
   const activeScale = scales[scaleSelect.value];
   const rootNoteName = activeScale[0];
-  const isRestrictionOn = disableToggle.checked; // Check the toggle state
+  const isRestrictionOn = disableToggle.checked;
 
   const startIndex = masterNotes.findIndex(n => n.name === rootNoteName);
   const displayNotes = masterNotes.slice(startIndex, startIndex + 13);
@@ -175,16 +235,17 @@ function buildKeyboard() {
   displayNotes.forEach(note => {
     const key = document.createElement("div");
     key.className = "key";
+    key.setAttribute('data-note', note.name);
+    key.setAttribute('data-freq', note.freq);
     
     if (note.name.includes('#')) {
-        key.style.background = "#333";
-        key.style.color = "white";
-        key.style.height = "200px";
+      key.style.background = "#333";
+      key.style.color = "white";
+      key.style.height = "200px";
     }
 
     key.textContent = note.name;
 
-    // Modified Logic: Only disable if the toggle is ON AND the note isn't in the scale
     if (isRestrictionOn && !activeScale.includes(note.name)) {
       key.classList.add("disabled");
       if(note.name.includes('#')) {
@@ -195,8 +256,10 @@ function buildKeyboard() {
         key.style.color = "#ccc";
       }
     } else {
-      // If toggle is OFF or note is in scale, it's playable!
-      key.onclick = () => play(note.freq);
+      // Mouse support
+      key.onmousedown = () => startNote(note.name, note.freq);
+      key.onmouseup = () => stopNote(note.name);
+      key.onmouseleave = () => stopNote(note.name);
     }
     keyboard.appendChild(key);
   });
