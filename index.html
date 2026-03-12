@@ -218,12 +218,6 @@ function stopNote(noteName) {
 }
 
 const masterNotes = [
-  {name:'C3', freq:130.81}, {name:'C3#', freq:138.59},
-  {name:'D3', freq:146.83}, {name:'D3#', freq:155.56},
-  {name:'E3', freq:164.81}, {name:'F3', freq:174.61},
-  {name:'F3#', freq:184.99}, {name:'G3', freq:196.00},
-  {name:'G3#', freq:207.65}, {name:'A3', freq:220.00},
-  {name:'A3#', freq:233.08}, {name:'B3', freq:246.94},
   {name:'C4', freq:261.63}, {name:'C4#', freq:277.18},
   {name:'D4', freq:293.66}, {name:'D4#', freq:311.13},
   {name:'E4', freq:329.63}, {name:'F4', freq:349.23},
@@ -241,14 +235,30 @@ const masterNotes = [
   {name:'E6', freq:1318.5}, {name:'F6', freq:1396.92},
   {name:'F6#', freq:1479.98}, {name:'G6', freq:1567.98},
   {name:'G6#', freq:1661.2}, {name:'A6', freq:1760.00},
+  {name:'A6#', freq:1864.66},{name:'B6', freq:1975.53},
+  {name:'C7', freq:2093.0},{name:'C7#', freq:2217.46},
+  {name:'D7', freq:2349.32}, {name:'D7#', freq:2489.0},
+  {name:'E7', freq:2637.0}, {name:'F7', freq:2793.83},
+  {name:'F7#', freq:2959.96}, {name:'G7', freq:3135.96},
+  {name:'G7#', freq:3322.4}, {name:'A7', freq:3520.0},
+  {name:'A7#', freq:3729.31}, {name:'B7', freq:3951.07}
 ];
 
 const scales = {
-  "C Major": ['C3','D3','E3','F3','G3','A3','B3','C3','C4','D4','E4','F4','G4','A4','B4','C5','D5','E5','F5','G5','A5','B5','C6'],
-  "G Major": ['G3','A4','B4','C4','D4','E4','F4#','G4','A4','B4','C5','D5','E5','F5#','G5','A5','B5','C6','D6','E6','F6#', 'G6'],
-  "D Major": ['D3','E3','F3#','G3','A3','B3','C4#','D4','E4','F4#','G4','A4','B4','C5#', 'D5','E5','F5#','G5','A5','B5','C6#', 'D6'],
-  "A Major": ['A3','B3','C4#','D4','E4','F4#','G4#','A4','B4','C5#','D5','E5','F5#','G5#', 'A5','B5','C6#','D6','E6','F6#','G6#', 'A6'],
-  "F Major": ['F3','G3','A3','A3#','C4','D4','E4','F4','G4','A4','A4#','C5','D5','E5', 'F5','G5','A5','A5#','C6','D6','E6', 'F6'],
+  "C Major": ['C4','D4','E4','F4','G4','A4','B4','C4','C5','D5','E5','F5','G5','A5','B5','C6','D6','E6','F6','G6','A6','B6','C7'],
+  "D Major": ['D4','E4','F4#','G4','A4','B4','C5#','D5','E5','F5#','G5','A5','B5','C6#', 'D6','E6','F6#','G6','A6','B6','C7#', 'D7'],
+  "E Major": ['E4','F4#','G4#','A4','B4','C5#','D5#','E5','F5#','G5#','A5','B5','C6#', 'D6#', 'E6','F6#','G6#','A6','B6','C7#', 'D7#', 'E7'],
+  "F Major": ['F4','G4','A4','A4#','C5','D5','E5','F5','G5','A5','A5#','C6','D6','E6', 'F6','G6','A6','A6#','C7','D7','E7', 'F7'],
+  "G Major": ['G4','A5','B5','C5','D5','E5','F5#','G5','A5','B5','C6','D6','E6','F6#','G6','A6','B6','C7','D7','E7','F7#', 'G7'],
+  "A Major": ['A4','B4','C5#','D5','E5','F5#','G5#','A5','B5','C6#','D6','E6','F6#','G6#', 'A6','B6','C7#','D7','E7','F7#','G7#', 'A7'],
+  "B Major": ['B4','C5#','D5#','E5','F5#','G5#','A5#','B5','C6#','D6#','E6','F6#','G6#', 'A6#', 'B6','C7#','D7#','E7','F7#','G7#', 'A7#', 'B7'],
+  "C Minor": ['C4','D4','D#4','F4','G4','G#4','A#4','C5','D5','D#5','F5','G5','G#5','A#5','C6','D6','D#6','F6','G6','G#6','A#6', 'C7'],
+  "D Minor": ['D4','E4','F4','G4','A4','A#4','C5','D5','E5','F5','G5','A5','A#5','C6','D6','E6','F6','G6','A6','A#6', 'C7','D7'],
+  "E Minor": ['E4','F#4','G4','A4','B4','C5','D5','E5','F#5','G5','A5','B5','C6','D6','E6','F#6','G6','A6','B6', 'C7','D7','E7'],
+  "F Minor": ['F4','G4','G#4','A#4','C5','C#5','D#5','F5','G5','G#5','A#5','C6','C#6','D#6','F6','G6','G#6','A#6', 'C7'],
+  "G Minor": ['G4','A4','A#4','C5','D5','D#5','F5','G5','A5','A#5','C6','D6','D#6','F6','G6','A6','A#6', 'C7', 'D7','D#7','F7','G7'],
+  "A Minor": ['A4','B4','C5','D5','E5','F5','G5','A5','B5','C6','D6','E6','F6','G6', 'A6','B6','C7','D7','E7','F7','G7', 'A7'],
+  "B Minor": ['B4','C#5','D5','E5','F#5','G5','A5','B5','C#6','D6','E6','F#6','G6', 'A6', 'B6','C#7','D7','E7','F#7','G7', 'A7', 'B7']
 
 };
 
@@ -294,7 +304,7 @@ function buildKeyboard() {
   const isRestrictionOn = disableToggle.checked;
 
   const startIndex = masterNotes.findIndex(n => n.name === rootNoteName);
-  const displayNotes = masterNotes.slice(startIndex, startIndex + 39);
+  const displayNotes = masterNotes.slice(startIndex, startIndex + 37);
 
   displayNotes.forEach(note => {
     const key = document.createElement("div");
